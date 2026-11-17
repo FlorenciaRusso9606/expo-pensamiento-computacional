@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jugá con nosotros</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: una sola columna tipo tarjeta, una etapa por pantalla, pensada para el celular del visitante */
+:root{
+  /* colores de las categorías de bloques: movimiento, control, variables, eventos, operadores, apariencia */
+  --bg:#f2f5fb; --surface:#ffffff; --ink:#24324a; --muted:#5d6a80; --line:#d9e1ee;
+  --accent:#3373cc; --accent-ink:#ffffff; --sun:#ffab19; --ok:#389438; --bad:#d64545; --soft:#e9f0fb;
+  --c-acc:#4c97ff; --c-cond:#ffab19; --c-var:#ff8c1a; --c-ev:#ffbf00; --c-op:#59c059; --c-look:#9966ff;
+  --display:"Fredoka","Nunito",system-ui,sans-serif; --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1722; --surface:#182331; --ink:#e8eef6; --muted:#9fb0c3; --line:#2a3a4d;
+  --accent:#4c97ff; --accent-ink:#0f1722; --sun:#ffab19; --ok:#5cc28a; --bad:#ef7b70; --soft:#1f2e40; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1722; --surface:#182331; --ink:#e8eef6; --muted:#9fb0c3; --line:#2a3a4d;
+  --accent:#4c97ff; --accent-ink:#0f1722; --sun:#ffab19; --ok:#5cc28a; --bad:#ef7b70; --soft:#1f2e40; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:4px}
+.school{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1,h2{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:30px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:56px;height:auto;flex:0 0 56px}
+h2{font-size:23px}
+p{margin:0}
+.steps{display:flex;gap:6px}
+.steps span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps span.on{background:var(--c-look)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:13px 18px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn:focus-visible,.pick:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1;min-width:120px}
+.hint{color:var(--muted);font-size:15px}
+/* Etapa 1 */
+.pool{display:flex;flex-direction:column;gap:8px}
+.pick{font:inherit;text-align:left;background:var(--soft);color:var(--ink);border:2px dashed var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.pick[disabled]{opacity:.35;cursor:default}
+ol.answer{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;counter-reset:n}
+ol.answer li{counter-increment:n;display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:10px 12px}
+ol.answer li::before{content:counter(n);font-family:var(--display);font-weight:600;background:var(--accent);color:var(--accent-ink);border-radius:50%;min-width:28px;height:28px;display:grid;place-items:center}
+ol.answer li.wrong{border-color:var(--bad)}
+ol.answer li.right{border-color:var(--ok)}
+.empty{color:var(--muted);font-size:15px;border:2px dashed var(--line);border-radius:12px;padding:12px;text-align:center}
+.msg{border-radius:12px;padding:12px 14px;font-weight:600}
+.msg.loop{background:color-mix(in srgb,var(--c-cond) 18%,transparent);border:2px solid var(--c-cond);color:var(--ink)}
+.msg.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ink);border:2px solid var(--ok)}
+.msg.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--ink);border:2px solid var(--bad)}
+/* Etapa 2 */
+.vars{display:flex;gap:10px}
+.var{flex:1;background:var(--c-var);color:#fff;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.var b{font-family:var(--display);font-size:26px;font-variant-numeric:tabular-nums}
+.var small{color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+.node{display:flex;gap:14px;align-items:center}
+.shape{flex:0 0 64px;height:64px;display:grid;place-items:center}
+.node-text{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.2}
+.tag.cond{color:#b86f00}.tag.acc{color:var(--accent)}.tag.ev{color:#a37700}
+:root[data-theme="dark"] .tag.cond,:root[data-theme="dark"] .tag.ev{color:var(--c-cond)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.cond,:root:not([data-theme="light"]) .tag.ev{color:var(--c-cond)}}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.scene{background:var(--soft);border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.scene svg{width:100%;max-width:340px;height:auto}
+.scene p{font-size:14px;color:var(--muted)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+/* Etapa 3 */
+.learn{display:grid;grid-template-columns:1fr;gap:10px}
+.learn div{background:var(--soft);border-radius:12px;padding:12px 14px}
+.learn b{font-family:var(--display);font-size:19px;display:block}
+.big{font-size:44px;text-align:center;font-family:var(--display)}
+footer{text-align:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="school">CET N° 38, Cinco Saltos, 1.er año</div>
+    <div class="brand"><svg class="logo" viewBox="-40 -44 80 76" role="img" aria-label="Gato naranja"><polygon points="-22,-14 -16,-38 -2,-22" fill="#f4a340" stroke="#333" stroke-width="2"/><polygon points="22,-14 16,-38 2,-22" fill="#f4a340" stroke="#333" stroke-width="2"/><circle r="26" fill="#f4a340" stroke="#333" stroke-width="2"/><circle cx="-9" cy="-4" r="4" fill="#222"/><circle cx="9" cy="-4" r="4" fill="#222"/><polygon points="-4,6 4,6 0,11" fill="#333"/><path d="M0 11 q-6 6 -11 2 M0 11 q6 6 11 2" stroke="#333" fill="none" stroke-width="2"/></svg><h1>Jugá con nosotros</h1></div>
+    <p class="hint">Expo de Pensamiento Computacional 2026</p>
+  </header>
+  <div class="steps" aria-hidden="true"><span id="s1"></span><span id="s2"></span><span id="s3"></span></div>
+  <main id="app" aria-live="polite"></main>
+  <footer>Taller de Pensamiento Computacional<br>Docente: Florencia Russo</footer>
+</div>
+
+<script>
+const app=document.getElementById('app');
+const shapes={
+  oval:'<svg viewBox="0 0 64 64" width="64" height="64"><rect x="4" y="18" width="56" height="28" rx="14" fill="var(--c-ev)" stroke="#cc9900" stroke-width="3"/></svg>',
+  rect:'<svg viewBox="0 0 64 64" width="64" height="64"><rect x="6" y="16" width="52" height="32" fill="var(--c-acc)" stroke="#3373cc" stroke-width="3"/></svg>',
+  diamond:'<svg viewBox="0 0 64 64" width="64" height="64"><polygon points="32,4 60,32 32,60 4,32" fill="var(--c-cond)" stroke="#cf8b17" stroke-width="3"/></svg>'
+};
+function festejo(n){try{if(window.confetti)confetti({particleCount:n,spread:n>60?100:60,startVelocity:n>60?45:30,origin:{y:.7},disableForReducedMotion:true})}catch(e){}}
+function setStep(n){[1,2,3].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i<=n));window.scrollTo({top:0})}
+
+/* ---------- Pantalla inicial ---------- */
+function intro(){
+  setStep(0);
+  app.innerHTML=`<div class="card">
+    <h2>Pensá como una computadora</h2>
+    <p>En nuestro taller aprendimos a dar instrucciones claras y precisas, a dibujarlas en diagramas de flujo y a programarlas en Scratch.</p>
+    <p>Te proponemos dos desafíos cortos:</p>
+    <p><b>1.</b> Ordenar un algoritmo.<br><b>2.</b> Ser la computadora en un juego.</p>
+    <button class="btn" id="go">Empezar</button></div>`;
+  document.getElementById('go').onclick=etapa1;
+}
+
+/* ---------- Etapa 1: ordenar el algoritmo ---------- */
+const PASOS=['Presionar el botón de encendido de la computadora.','Esperar a que aparezca la pantalla de inicio.','Escribir el usuario y la contraseña.','Presionar Enter.'];
+const PISTAS=['La computadora tiene que estar prendida antes de cualquier otra cosa.','Antes de escribir, hay que esperar a que aparezca la pantalla de inicio.','Primero se escriben el usuario y la contraseña, y después se confirma.','Enter va al final, para confirmar lo que escribiste.'];
+function etapa1(){
+  setStep(1);
+  const orden=[0,1,2,3].sort(()=>Math.random()-.5);
+  if(orden.join()==='0,1,2,3') orden.reverse();
+  let elegidos=[];
+  app.innerHTML=`<div class="card">
+    <span class="tag">Desafío 1: Algoritmo</span>
+    <h2>Prender la computadora</h2>
+    <p>Un <b>algoritmo</b> es una serie de pasos ordenados, claros y precisos. Tocá los pasos en el orden correcto.</p>
+    <div class="pool" id="pool"></div>
+    <ol class="answer" id="ans"></ol>
+    <div id="fb"></div>
+    <div class="row"><button class="btn ghost" id="reset">Empezar de nuevo</button></div>
+  </div>`;
+  const pool=document.getElementById('pool'),ans=document.getElementById('ans'),fb=document.getElementById('fb');
+  function draw(){
+    pool.innerHTML='';
+    orden.forEach(i=>{const b=document.createElement('button');b.className='pick';b.id='p'+i;b.textContent=PASOS[i];b.disabled=elegidos.includes(i);b.onclick=()=>{elegidos.push(i);draw();if(elegidos.length===4)check()};pool.appendChild(b)});
+    ans.innerHTML=elegidos.length?elegidos.map(i=>`<li>${PASOS[i]}</li>`).join(''):'';
+    if(!elegidos.length) ans.innerHTML='<div class="empty">Acá va a aparecer tu algoritmo.</div>';
+    fb.innerHTML='';
+  }
+  function check(){
+    const lis=[...ans.querySelectorAll('li')];
+    const mal=elegidos.findIndex((v,k)=>v!==k);
+    lis.forEach((li,k)=>li.classList.add(elegidos[k]===k?'right':'wrong'));
+    if(mal===-1){
+      festejo(120);
+      fb.innerHTML=`<div class="msg ok">¡Muy bien! La computadora sigue los pasos en el orden exacto en que se los damos.</div><button class="btn" id="next">Siguiente desafío</button>`;
+      document.getElementById('next').onclick=etapa2;
+    }else{
+      fb.innerHTML=`<div class="msg bad">Revisá el paso ${mal+1}. ${PISTAS[mal]}</div>`;
+      app.querySelector('.card').classList.add('shake');setTimeout(()=>app.querySelector('.card')?.classList.remove('shake'),400);
+    }
+  }
+  document.getElementById('reset').onclick=()=>{elegidos=[];draw()};
+  draw();
+}
+
+/* ---------- Etapa 2: sos la computadora ---------- */
+const CAT='<g><polygon points="-22,-14 -16,-38 -2,-22" fill="#f4a340" stroke="#333" stroke-width="2"/><polygon points="22,-14 16,-38 2,-22" fill="#f4a340" stroke="#333" stroke-width="2"/><circle r="26" fill="#f4a340" stroke="#333" stroke-width="2"/><circle cx="-9" cy="-4" r="4" fill="#222"/><circle cx="9" cy="-4" r="4" fill="#222"/><polygon points="-4,6 4,6 0,11" fill="#333"/></g>';
+const APPLE='<g><path d="M0 -16 C-18 -26 -32 -8 -26 12 C-20 32 -8 34 0 28 C8 34 20 32 26 12 C32 -8 18 -26 0 -16Z" fill="#e33" stroke="#333" stroke-width="2"/><path d="M0 -16 Q2 -28 8 -32" stroke="#6b3" stroke-width="4" fill="none"/></g>';
+const DOG='<g><ellipse cx="-24" cy="-6" rx="9" ry="18" fill="#8a5a2b" stroke="#333" stroke-width="2"/><ellipse cx="24" cy="-6" rx="9" ry="18" fill="#8a5a2b" stroke="#333" stroke-width="2"/><circle r="25" fill="#d9a066" stroke="#333" stroke-width="2"/><circle cx="-8" cy="-4" r="4" fill="#222"/><circle cx="8" cy="-4" r="4" fill="#222"/><ellipse cx="0" cy="9" rx="7" ry="5" fill="#333"/></g>';
+function scene(ev){
+  // posiciones: el gato toca al objeto que corresponde, el otro queda lejos
+  const cat=ev==='manzana'?150:ev==='perro'?190:170;
+  const ap=ev==='manzana'?205:40, dg=ev==='perro'?245:300;
+  const txt=ev==='manzana'?'El gato está tocando la manzana.':ev==='perro'?'El gato está tocando al perro.':'El gato no toca nada.';
+  return `<div class="scene"><svg viewBox="0 0 340 100" role="img" aria-label="${txt}"><line x1="10" y1="92" x2="330" y2="92" stroke="var(--line)" stroke-width="3"/>
+    <g transform="translate(${ap},58)">${APPLE}</g><g transform="translate(${dg},60)">${DOG}</g><g transform="translate(${cat},60)">${CAT}</g></svg><p>Mirá la escena para responder.</p></div>`;
+}
+function etapa2(){
+  setStep(2);
+  let puntos=0,vidas=3,ev=null,nodo='inicio',vueltas=0,auto=false,timer=null;
+  function nuevoEvento(){const guion=['manzana','perro'];if(vueltas<2){ev=guion[vueltas];return}const r=Math.random();ev=r<.85?'manzana':r<.93?'perro':'nada'}
+  const correcta={
+    q1:()=>puntos===5, q2:()=>vidas===0, q3:()=>ev==='manzana', q4:()=>ev==='perro'
+  };
+  const sig={
+    q1:[ 'ganar','q2'], q2:['perder','q3'], q3:['accManzana','q4'], q4:['accPerro','vuelta']
+  };
+  const explica={
+    q1:()=>`puntos vale ${puntos}, así que la respuesta es "${puntos===5?'sí':'no'}".`,
+    q2:()=>`vidas vale ${vidas}, así que la respuesta es "${vidas===0?'sí':'no'}".`,
+    q3:()=>ev==='manzana'?'El gato sí toca la manzana.':'El gato no toca la manzana.',
+    q4:()=>ev==='perro'?'El gato sí toca al perro.':'El gato no toca al perro.'
+  };
+  const preguntas={q1:'¿puntos = 5?',q2:'¿vidas = 0?',q3:'¿El gato toca la manzana?',q4:'¿El gato toca al perro?'};
+  function vars(){return `<div class="vars"><div class="var"><small>puntos</small><b>${puntos}</b></div><div class="var"><small>vidas</small><b>${vidas}</b></div></div>`}
+  function render(extra=''){
+    let html=`<div class="card" id="c2"><span class="tag">Desafío 2: Sos la computadora</span>`;
+    if(nodo==='inicio'){
+      html+=`<h2>El gato atrapa la manzana y esquiva al perro</h2>
+      <p>Vas a seguir el diagrama de flujo, paso a paso, como lo hace la computadora. Con 5 puntos ganás. Si las vidas llegan a 0, perdés.</p>
+      <div class="node"><div class="shape">${shapes.oval}</div><div><span class="tag ev">Inicio</span><div class="node-text">Empieza el juego</div></div></div>
+      <div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción con variables</span><div class="node-text">puntos = 0<br>vidas = 3</div></div></div>
+      <button class="btn" id="b">Seguir</button>`;
+    }else if(nodo in preguntas){
+      html+=vars();
+      if(nodo==='q3'||nodo==='q4') html+=scene(ev);
+      html+=`<div class="node"><div class="shape">${shapes.diamond}</div><div><span class="tag cond">Condicional</span><div class="node-text">${preguntas[nodo]}</div></div></div>
+      ${extra}
+      <div class="row"><button class="btn" id="si">Sí</button><button class="btn" id="no">No</button></div>`;
+    }else if(nodo==='accManzana'||nodo==='accPerro'){
+      html+=vars()+`<div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción con una variable</span><div class="node-text">${nodo==='accManzana'?'Sumar 1 punto<br>Mover la manzana a otro lugar':'Restar 1 vida<br>Mover al perro a otro lugar'}</div></div></div>
+      <div class="msg loop">Y volvemos a la primera pregunta. Repetir lo mismo una y otra vez es un <b>bucle</b>.</div>
+      <button class="btn" id="b">Seguir</button>`;
+    }else if(nodo==='vuelta'){
+      html+=vars()+`<div class="msg loop">El gato no tocó nada, así que no cambia ninguna variable. Volvemos a la primera pregunta: es un <b>bucle</b>.</div>
+      <button class="btn" id="b">Seguir</button>`;
+    }else{
+      const gano=nodo==='ganar';
+      html+=vars()+`<div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción</span><div class="node-text">Decir "${gano?'¡Ganaste!':'¡Perdiste!'}"</div></div></div>
+      <div class="node"><div class="shape">${shapes.oval}</div><div><span class="tag ev">Fin</span><div class="node-text">Termina el juego</div></div></div>
+      <p>Seguiste el algoritmo igual que una computadora. En el camino usaste <b>variables</b> (puntos y vidas), <b>condicionales</b> (cada pregunta de sí o no) y un <b>bucle</b> (volver a empezar las preguntas).</p>
+      <div class="row"><button class="btn ghost" id="otra">Jugar otra vez</button><button class="btn" id="b">Terminar</button></div>`;
+    }
+    html+='</div>';
+    app.innerHTML=html;
+    const b=document.getElementById('b');
+    if(b) b.onclick=avanzar;
+    const si=document.getElementById('si'),no=document.getElementById('no');
+    if(si){si.onclick=()=>responder(true);no.onclick=()=>responder(false)}
+    const o=document.getElementById('otra'); if(o) o.onclick=etapa2;
+    if(auto&&!['ganar','perder'].includes(nodo)) {clearTimeout(timer);timer=setTimeout(paso,650)}
+  }
+  function paso(){ if(nodo in preguntas) responder(correcta[nodo]()); else avanzar(); }
+  function responder(r){
+    const ok=r===correcta[nodo]();
+    if(!ok){render(`<div class="msg bad">¡Ojo! ${explica[nodo]()} La computadora no adivina: revisa los datos.</div>`);
+      const c=document.getElementById('c2');c.classList.add('shake');return}
+    if(!auto) festejo(25);
+    nodo=sig[nodo][r?0:1];
+    if(nodo==='accManzana') puntos++;
+    if(nodo==='accPerro') vidas--;
+    render();
+    if(nodo==='ganar') festejo(160);
+  }
+  function avanzar(){
+    if(nodo==='inicio'){nuevoEvento();nodo='q1'}
+    else if(nodo==='accManzana'||nodo==='accPerro'||nodo==='vuelta'){vueltas++;nuevoEvento();nodo='q1'}
+    else if(nodo==='ganar'||nodo==='perder'){etapa3();return}
+    render();
+  }
+  render();
+}
+
+/* ---------- Etapa 3: gracias ---------- */
+function etapa3(){
+  setStep(3);
+  festejo(150);
+  setTimeout(()=>{try{if(window.confetti){confetti({particleCount:90,angle:60,spread:70,origin:{x:0,y:.8},disableForReducedMotion:true});confetti({particleCount:90,angle:120,spread:70,origin:{x:1,y:.8},disableForReducedMotion:true})}}catch(e){}},500);
+  app.innerHTML=`<div class="card">
+    <div class="big" aria-hidden="true">¡Gracias!</div>
+    <h2>Gracias por visitarnos</h2>
+    <p>Esto es parte de lo que aprendimos este año en el taller:</p>
+    <div class="learn">
+      <div><b>Algoritmo</b>Pasos ordenados, claros y precisos para resolver un problema.</div>
+      <div><b>Diagrama de flujo</b>El dibujo de un algoritmo: óvalo para empezar y terminar, rectángulo para una acción, rombo para una pregunta.</div>
+      <div><b>Bucle</b>Repite instrucciones una y otra vez.</div>
+      <div><b>Condicional</b>Hace una pregunta de sí o no y, según la respuesta, hace una cosa u otra.</div>
+      <div><b>Variable</b>Guarda un dato que cambia, como los puntos o las vidas.</div>
+    </div>
+    <p>Con todo esto programamos nuestros propios juegos en Scratch. ¡Pasá a probarlos!</p>
+    <button class="btn ghost" id="again">Volver al inicio</button></div>`;
+  document.getElementById('again').onclick=intro;
+}
+intro();
+</script>
+
+</body>
+</html>
