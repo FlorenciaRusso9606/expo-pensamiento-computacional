@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
 <style>
-/* Layout: una sola columna tipo tarjeta, una etapa por pantalla, pensada para el celular del visitante */
+/* Layout */
 :root{
   /* colores de las categorías de bloques: movimiento, control, variables, eventos, operadores, apariencia */
   --bg:#f2f5fb; --surface:#ffffff; --ink:#24324a; --muted:#5d6a80; --line:#d9e1ee;
@@ -131,7 +131,7 @@ function etapa1(){
   let elegidos=[];
   app.innerHTML=`<div class="card">
     <span class="tag">Desafío 1: Algoritmo</span>
-    <h2>Prender la computadora</h2>
+    <h2>Iniciar sesión en la computadora</h2>
     <p>Un <b>algoritmo</b> es una serie de pasos ordenados, claros y precisos. Tocá los pasos en el orden correcto.</p>
     <div class="pool" id="pool"></div>
     <ol class="answer" id="ans"></ol>
@@ -177,8 +177,8 @@ function scene(ev){
 }
 function etapa2(){
   setStep(2);
-  let puntos=0,vidas=3,ev=null,nodo='inicio',vueltas=0,auto=false,timer=null;
-  function nuevoEvento(){const guion=['manzana','perro'];if(vueltas<2){ev=guion[vueltas];return}const r=Math.random();ev=r<.85?'manzana':r<.93?'perro':'nada'}
+  let puntos=0,vidas=3,ev=null,nodo='inicio',vueltas=0,aviso='';
+  function nuevoEvento(){const guion=['manzana','perro'];if(vueltas<2){ev=guion[vueltas];return}ev='manzana'}
   const correcta={
     q1:()=>puntos===5, q2:()=>vidas===0, q3:()=>ev==='manzana', q4:()=>ev==='perro'
   };
@@ -202,18 +202,11 @@ function etapa2(){
       <div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción con variables</span><div class="node-text">puntos = 0<br>vidas = 3</div></div></div>
       <button class="btn" id="b">Seguir</button>`;
     }else if(nodo in preguntas){
-      html+=vars();
+      html+=vars()+aviso;
       if(nodo==='q3'||nodo==='q4') html+=scene(ev);
       html+=`<div class="node"><div class="shape">${shapes.diamond}</div><div><span class="tag cond">Condicional</span><div class="node-text">${preguntas[nodo]}</div></div></div>
       ${extra}
       <div class="row"><button class="btn" id="si">Sí</button><button class="btn" id="no">No</button></div>`;
-    }else if(nodo==='accManzana'||nodo==='accPerro'){
-      html+=vars()+`<div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción con una variable</span><div class="node-text">${nodo==='accManzana'?'Sumar 1 punto<br>Mover la manzana a otro lugar':'Restar 1 vida<br>Mover al perro a otro lugar'}</div></div></div>
-      <div class="msg loop">Y volvemos a la primera pregunta. Repetir lo mismo una y otra vez es un <b>bucle</b>.</div>
-      <button class="btn" id="b">Seguir</button>`;
-    }else if(nodo==='vuelta'){
-      html+=vars()+`<div class="msg loop">El gato no tocó nada, así que no cambia ninguna variable. Volvemos a la primera pregunta: es un <b>bucle</b>.</div>
-      <button class="btn" id="b">Seguir</button>`;
     }else{
       const gano=nodo==='ganar';
       html+=vars()+`<div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción</span><div class="node-text">Decir "${gano?'¡Ganaste!':'¡Perdiste!'}"</div></div></div>
@@ -228,23 +221,27 @@ function etapa2(){
     const si=document.getElementById('si'),no=document.getElementById('no');
     if(si){si.onclick=()=>responder(true);no.onclick=()=>responder(false)}
     const o=document.getElementById('otra'); if(o) o.onclick=etapa2;
-    if(auto&&!['ganar','perder'].includes(nodo)) {clearTimeout(timer);timer=setTimeout(paso,650)}
   }
-  function paso(){ if(nodo in preguntas) responder(correcta[nodo]()); else avanzar(); }
   function responder(r){
     const ok=r===correcta[nodo]();
     if(!ok){render(`<div class="msg bad">¡Ojo! ${explica[nodo]()} La computadora no adivina: revisa los datos.</div>`);
       const c=document.getElementById('c2');c.classList.add('shake');return}
-    if(!auto) festejo(25);
+    festejo(25);
     nodo=sig[nodo][r?0:1];
-    if(nodo==='accManzana') puntos++;
-    if(nodo==='accPerro') vidas--;
+    aviso='';
+    if(nodo==='accManzana'||nodo==='accPerro'||nodo==='vuelta'){
+      const txt=nodo==='accManzana'?'Sumar 1 punto y mover la manzana':nodo==='accPerro'?'Restar 1 vida y mover al perro':'';
+      if(nodo==='accManzana') puntos++;
+      if(nodo==='accPerro') vidas--;
+      aviso=txt?`<div class="node"><div class="shape">${shapes.rect}</div><div><span class="tag acc">Acción con una variable</span><div class="node-text">${txt}</div></div></div>`:'';
+      aviso+=`<div class="msg loop">${txt?'':'El gato no tocó nada, no cambia ninguna variable. '}Volvemos a la primera pregunta: eso es un <b>bucle</b>.</div>`;
+      vueltas++;nuevoEvento();nodo='q1';
+    }
     render();
     if(nodo==='ganar') festejo(160);
   }
   function avanzar(){
     if(nodo==='inicio'){nuevoEvento();nodo='q1'}
-    else if(nodo==='accManzana'||nodo==='accPerro'||nodo==='vuelta'){vueltas++;nuevoEvento();nodo='q1'}
     else if(nodo==='ganar'||nodo==='perder'){etapa3();return}
     render();
   }
